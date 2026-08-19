@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ad Spend & ROAS Calculator</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 960px;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+      color: #ffffff;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .header h1 { font-size: 1.85rem; font-weight: 700; margin-bottom: 8px; }
+    .header p { color: #dbeafe; font-size: 0.95rem; max-width: 600px; margin: 0 auto; }
+
+    .calculator-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 768px) { .calculator-grid { grid-template-columns: 1fr; } }
+
+    .inputs-section { padding: 32px 24px; border-right: 1px solid var(--border-color); }
+    @media (max-width: 768px) { .inputs-section { border-right: none; border-bottom: 1px solid var(--border-color); } }
+
+    .section-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 18px; color: var(--text-main); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-prefix, .input-suffix { position: absolute; color: var(--text-muted); font-size: 0.9rem; pointer-events: none; }
+    .input-prefix { left: 12px; }
+    .input-suffix { right: 12px; }
+
+    .form-control {
+      width: 100%; padding: 10px 12px; font-size: 0.95rem;
+      border: 1px solid var(--border-color); border-radius: 8px;
+      background: var(--bg-color); color: var(--text-main);
+    }
+    .form-control.has-prefix { padding-left: 28px; }
+    .form-control.has-suffix { padding-right: 36px; }
+
+    .results-section {
+      padding: 32px 24px; background-color: #fafafa;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+
+    .primary-card {
+      background: #ffffff; border: 2px solid var(--primary);
+      border-radius: var(--radius); padding: 24px; text-align: center; margin-bottom: 20px;
+    }
+
+    .primary-card .label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--primary); }
+    .primary-card .amount { font-size: 2.8rem; font-weight: 800; color: var(--text-main); line-height: 1.1; margin-top: 4px; }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    .stat-card { background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .stat-card .stat-label { font-size: 0.75rem; color: var(--text-muted); }
+    .stat-card .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-top: 2px; }
+
+    .cta-container {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff; padding: 24px; border-radius: 10px; text-align: center;
+    }
+    .cta-title { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .cta-desc { font-size: 0.825rem; color: #94a3b8; margin-bottom: 16px; }
+
+    .stripe-link-btn {
+      display: inline-block; width: 100%; background: #2563eb; color: #ffffff;
+      font-weight: 700; font-size: 0.9rem; padding: 12px 20px; border-radius: 6px;
+      text-decoration: none; transition: background 0.2s ease;
+    }
+    .stripe-link-btn:hover { background: #1d4ed8; }
+
+    .footer { text-align: center; padding: 16px; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border-color); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Ad Spend & ROAS Calculator</h1>
+      <p>Determine your target Return on Ad Spend (ROAS), break-even metrics, and net ad profitability.</p>
+    </div>
+
+    <div class="calculator-grid">
+      <div class="inputs-section">
+        <div class="section-title">1. Ad Campaign Inputs</div>
+        <div class="form-group">
+          <label for="adSpend">Monthly Ad Budget</label>
+          <div class="input-wrapper">
+            <span class="input-prefix">$</span>
+            <input type="number" id="adSpend" class="form-control has-prefix" value="5000" step="500">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="targetROAS">Target ROAS Multiplier</label>
+          <div class="input-wrapper">
+            <input type="number" id="targetROAS" class="form-control has-suffix" value="3.5" step="0.1" min="1">
+            <span class="input-suffix">x</span>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top: 24px;">2. Product Economics</div>
+        <div class="form-group">
+          <label for="aov">Average Order Value (AOV)</label>
+          <div class="input-wrapper">
+            <span class="input-prefix">$</span>
+            <input type="number" id="aov" class="form-control has-prefix" value="85" step="5">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cogs">Cost of Goods / Fulfillment per Order</label>
+          <div class="input-wrapper">
+            <span class="input-prefix">$</span>
+            <input type="number" id="cogs" class="form-control has-prefix" value="25" step="5">
+          </div>
+        </div>
+      </div>
+
+      <div class="results-section">
+        <div>
+          <div class="primary-card">
+            <div class="label">Target Gross Revenue</div>
+            <div class="amount" id="grossRevenue">$0</div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Estimated Net Profit</div>
+              <div class="stat-value" id="netProfit">$0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Max Target CPA</div>
+              <div class="stat-value" id="maxCPA">$0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Break-Even ROAS</div>
+              <div class="stat-value" id="breakEvenROAS">0.0x</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Required Sales Volume</div>
+              <div class="stat-value" id="requiredSales">0 orders</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cta-container">
+          <div class="cta-title">Scale Your Ad Campaigns</div>
+          <div class="cta-desc">Download the complete High-Converting Ad Copy & Creative Brief Templates kit with plug-and-play frameworks for Meta, TikTok, and Google Ads.</div>
+
+          <a href="https://buy.stripe.com/bJe7sLcx8eLZefM5VN2Ry02" class="stripe-link-btn" target="_blank" rel="noopener">
+            Get The Ad Kit ($2.99)
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Powered by Ad Spend & ROAS Calculator &bull; Free Marketing Tool Wheelz
+    </div>
+  </div>
+
+  <script>
+    function calculateROAS() {
+      const adSpend = parseFloat(document.getElementById('adSpend').value) || 0;
+      const targetROAS = parseFloat(document.getElementById('targetROAS').value) || 0;
+      const aov = parseFloat(document.getElementById('aov').value) || 0;
+      const cogs = parseFloat(document.getElementById('cogs').value) || 0;
+
+      const grossRevenue = adSpend * targetROAS;
+      const requiredSales = aov > 0 ? Math.ceil(grossRevenue / aov) : 0;
+      const totalCOGS = requiredSales * cogs;
+      const netProfit = grossRevenue - adSpend - totalCOGS;
+
+      const marginPerOrder = aov - cogs;
+      const maxCPA = requiredSales > 0 ? (grossRevenue - totalCOGS - (netProfit > 0 ? netProfit : 0)) / requiredSales : 0;
+      const breakEvenROAS = marginPerOrder > 0 ? aov / marginPerOrder : 0;
+
+      const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+
+      document.getElementById('grossRevenue').innerText = formatCurrency(grossRevenue);
+      document.getElementById('netProfit').innerText = formatCurrency(netProfit);
+      document.getElementById('maxCPA').innerText = formatCurrency(maxCPA);
+      document.getElementById('breakEvenROAS').innerText = breakEvenROAS.toFixed(2) + 'x';
+      document.getElementById('requiredSales').innerText = requiredSales.toLocaleString() + ' orders';
+    }
+
+    document.querySelectorAll('.form-control').forEach(input => input.addEventListener('input', calculateROAS));
+    calculateROAS();
+  </script>
+</body>
+</html>
